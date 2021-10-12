@@ -4,21 +4,26 @@ window.onload = function () {
     const cx = canvas.getContext("2d");
 
     function clock() {
-        cx.fillStyle = "#ffffff";
+
         cx.save();
+        cx.fillStyle = "#ffffff";
         cx.translate(300, 300);
+
+        cx.shadowColor = "#a2a2a2";
+        cx.shadowBlur=20;
+        cx.shadowOffsetY=0;
+
         cx.beginPath();
         cx.arc(0, 0, 270, 0, Math.PI * 2);
-        cx.closePath();
         cx.fill();
+
+
+
         cx.closePath();
         cx.restore();
 
-        cx.closePath();
-        cx.fill();//
-        // Drawing time degree
+        // Drawing time labels
         cx.lineWidth = 2;
-        cx.strokeStyle = "black";
         for (let i = 0; i < 24; i++) {
             cx.save();
             cx.translate(300, 300);// Shape shift
