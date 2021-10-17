@@ -18,7 +18,7 @@ const start = () => {
     nextClock()
     setInterval(() => {
         nextClock()
-    }, 1000);
+    }, 1000/20);
 }
 
 const nextClock = () => {
@@ -38,8 +38,8 @@ const nextClock = () => {
     drawOuterArc(startHour, startMinute, endHour, endMinute, darkColor, false, true);
     drawInnerArc(startMinute, endMinute, lightColor, true)
 
-    drawLabels(-75, 235, 30, 24, 1); // Hour Labels
-    drawLabels(-90, 155, 18, 12, 5); // Minute Labels
+    drawLabels(-75, 235, 30, 24, 1, 1); // Hour Labels
+    drawLabels(-90, 155, 18, 12, 5, 0); // Minute Labels
     drawMiddlePoint();
 }
 
@@ -52,11 +52,12 @@ const getRadians = (degree) => (degree * Math.PI) / 180
  * @param {number} fontSize
  * @param {number} numOfLabels
  * @param {number} increment
+ * @param {number} labelStart
  */
-const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment) => {
+const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, labelStart) => {
     const xCorrex = -(fontSize / 2); // Because of the FontSize to position it correct over the Strokes
     const yCorrex = (fontSize / 3);
-    let labelText = 1;
+    let labelText = labelStart;
     const angleBetweenLabels = (360 / numOfLabels); // 360 degree / number of labels
 
     for (let i = 0; i < numOfLabels; i++) {
