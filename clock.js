@@ -200,7 +200,7 @@ const drawOuterArc = (startHour, startMinute, endHour, endMinute, color,
         startAngle = angleForTime(startFullHour, 0);
         endAngle = angleForTime(endHour, 0);
     } else {
-        startAngle = angleForTime(startHour, 0);
+        startAngle = angleForTime(startHour, startMinute);
         endAngle = angleForTime(endHour, endMinute);
     }
 
