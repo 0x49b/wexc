@@ -3,6 +3,8 @@ const cx = canvas.getContext("2d");
 
 const lightColor = '#ADCEFF'
 const darkColor = '#4485E8'
+const greenColor = '#90F0B6';
+const redColor = '#F09090';
 
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -11,47 +13,68 @@ const lineWidth = 55;
 const handleLength = 8;
 const radius = canvas.width / 2 - lineWidth - 10;
 
-function start() {
+const start = () => {
     nextClock()
     setInterval(() => {
         nextClock()
     }, 1000);
 }
 
-function nextClock() {
+const nextClock = () => {
     cx.clearRect(0, 0, 600, 600)
-    clockFace();
-    drawOuterArc(7, 0, 10, 55, lightColor, true);
+    drawClockFace();
+
+    let start = (document.getElementById("start").value).split(":");
+    let end = (document.getElementById("end").value).split(":");
+
+    let startHour = parseInt(start[0]);
+    let startMinute = parseInt(start[1]);
+
+    let endHour = parseInt(end[0]);
+    let endMinute = parseInt(end[1]);
+
+
+    drawOuterArc(startHour, startMinute, endHour, endMinute, lightColor, true);
     drawOuterArc(7, 50, 10, 0, darkColor, false);
-    drawInnerArc( 50,  55, lightColor, true)
-    drawHourLabels();
+    drawInnerArc(50, 55, lightColor, true)
+
+    drawLabels(-75, 235, 30, 24, 1); // Hour Labels
+    drawLabels(-90, 155, 18, 12, 5); // Minute Labels
     drawMiddlePoint();
 }
 
 const getRadians = (degree) => (degree * Math.PI) / 180
 
-function drawHourLabels() {
-    // Stunden Labels
-    let labelAngle = -75;
-    const labelRadius = 235;
-    const fontSize = 30;
+/**
+ *
+ * @param {number} labelAngle
+ * @param {number} labelRadius
+ * @param {number} fontSize
+ * @param {number} numOfLabels
+ * @param {number} increment
+ */
+const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment) => {
     const xCorrex = -(fontSize / 2); // Because of the FontSize to position it correct over the Strokes
     const yCorrex = (fontSize / 3);
-    for (let i = 0; i < 24; i++) {
+    let labelText = 0;
+    const angleBetweenLabels = (360 / numOfLabels); // 360 degree / number of labels
+
+    for (let i = 0; i < numOfLabels; i++) {
         cx.save();
         cx.translate(300, 300);
         cx.fillStyle = "#6D6D6D";
         cx.font = '300 ' + fontSize + 'px Roboto';
-        let x = labelRadius * Math.cos(getRadians(labelAngle + (15 * i))) + xCorrex
-        let y = labelRadius * Math.sin(getRadians(labelAngle + (15 * i))) + yCorrex
-        cx.fillText((1 + i).toString(), x, y);// Text
+        let x = labelRadius * Math.cos(getRadians(labelAngle + (angleBetweenLabels * i))) + xCorrex;
+        let y = labelRadius * Math.sin(getRadians(labelAngle + (angleBetweenLabels * i))) + yCorrex;
+        cx.fillText(labelText.toString(), x, y);// Text
         cx.restore();
+
+        labelText += increment;
     }
 }
 
 
-function clockFace() {
-
+const drawClockFace = () => {
     // Weisse Scheibe
     cx.save();
     cx.fillStyle = "#ffffff";
@@ -64,7 +87,6 @@ function clockFace() {
     cx.fill();
     cx.closePath();
     cx.restore();
-
 
     // Stroke - Skala
     for (let i = 0; i < 60; i++) {
@@ -86,10 +108,9 @@ function clockFace() {
         cx.closePath();
         cx.restore();
     }
-
 }
 
-function drawMiddlePoint() {
+const drawMiddlePoint = () => {
     // Punkt in der Mitte
     cx.fillStyle = '#606060';
     cx.save();
@@ -108,7 +129,7 @@ function drawMiddlePoint() {
  * @param {number} minutes
  * @param {boolean} clockFaceMinutes – if true, the calculated angle applies to a clock face with minutes only.
  */
-function angleForTime(hours, minutes, clockFaceMinutes = false) {
+const angleForTime = (hours, minutes, clockFaceMinutes = false) => {
     const fullCircleAngle = 2 * Math.PI;
     const totalMinutes = clockFaceMinutes ? minutes : (hours * 60 + minutes)
     let angleOfMinute;
@@ -128,7 +149,7 @@ function angleForTime(hours, minutes, clockFaceMinutes = false) {
     return angle
 }
 
-function drawLine(x, y, radius, angle, length, color) {
+const drawLine = (x, y, radius, angle, length, color) => {
     let startX = radius * Math.sin(angle) + x;
     let startY = radius * Math.cos(angle) + y;
     cx.beginPath();
@@ -139,7 +160,7 @@ function drawLine(x, y, radius, angle, length, color) {
     cx.stroke();
 }
 
-function drawOuterArc(startHour, startMinute, endHour, endMinute, color, drawLines = false) {
+const drawOuterArc = (startHour, startMinute, endHour, endMinute, color, drawLines = false) => {
 
     let startAngle = angleForTime(startHour, startMinute);
     let endAngle = angleForTime(endHour, endMinute);
@@ -147,12 +168,12 @@ function drawOuterArc(startHour, startMinute, endHour, endMinute, color, drawLin
     drawArc(startAngle, endAngle, color, false)
 
     if (drawLines) {
-        drawLine(centerX, centerY, radius, endAngle, 20, '#90F0B6');
-        drawLine(centerX, centerY, radius, startAngle, 20, '#F09090');
+        drawLine(centerX, centerY, radius, endAngle, 20, greenColor);
+        drawLine(centerX, centerY, radius, startAngle, 20, redColor);
     }
 }
 
-function drawInnerArc(startMinute, endMinute, color, drawLines = true) {
+const drawInnerArc = (startMinute, endMinute, color, drawLines = true) => {
 
     let startAngle = angleForTime(0, startMinute, true);
     let endAngle = angleForTime(0, endMinute, true);
@@ -160,19 +181,19 @@ function drawInnerArc(startMinute, endMinute, color, drawLines = true) {
     drawArc(startAngle, endAngle, color, true)
 
     if (drawLines) {
-        drawLine(centerX, centerY, radius-lineWidth+handleLength, endAngle, 20, '#90F0B6');
-        drawLine(centerX, centerY, radius-lineWidth+handleLength, startAngle, 20, '#F09090');
+        drawLine(centerX, centerY, radius - lineWidth + handleLength, endAngle, 20, greenColor);
+        drawLine(centerX, centerY, radius - lineWidth + handleLength, startAngle, 20, redColor);
     }
 }
 
-function drawArc(startAngle, endAngle, color, drawInner = false) {
+const drawArc = (startAngle, endAngle, color, drawInner = false) => {
 
+    cx.save();
     cx.beginPath();
-
     if (drawInner) {
         // inner
         if (drawInner) cx.moveTo(centerX, centerY);
-        cx.arc(centerX, centerY, radius-lineWidth, startAngle, endAngle);
+        cx.arc(centerX, centerY, radius - lineWidth, startAngle, endAngle);
         cx.fillStyle = color;
         cx.fill();
     } else {
@@ -182,4 +203,5 @@ function drawArc(startAngle, endAngle, color, drawInner = false) {
         cx.strokeStyle = color;
         cx.stroke();
     }
+    cx.restore();
 }
