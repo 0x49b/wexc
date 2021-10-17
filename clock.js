@@ -63,7 +63,7 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment) =
         cx.save();
         cx.translate(300, 300);
         cx.fillStyle = "#6D6D6D";
-        cx.font = '300 ' + fontSize + 'px Roboto';
+        cx.font = '300 ' + fontSize + 'px robotolight';
         let x = labelRadius * Math.cos(getRadians(labelAngle + (angleBetweenLabels * i))) + xCorrex;
         let y = labelRadius * Math.sin(getRadians(labelAngle + (angleBetweenLabels * i))) + yCorrex;
         cx.fillText(labelText.toString(), x, y);// Text
