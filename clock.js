@@ -18,21 +18,29 @@ const start = () => {
     nextClock()
     setInterval(() => {
         nextClock()
-    }, 1000/20);
+    }, 1000 / 20);
 }
 
 const nextClock = () => {
-    cx.clearRect(0, 0, 600, 600)
+    cx.clearRect(0, 0, canvas.width, canvas.height)
     drawClockFace();
 
-    let start = (document.getElementById("start").value).split(":");
-    let end = (document.getElementById("end").value).split(":");
+    const predefined = document.getElementById("predefined");
+    let startHour = 7;
+    let startMinute = 0;
+    let endHour = 10;
+    let endMinute = 55;
 
-    let startHour = parseInt(start[0]);
-    let startMinute = parseInt(start[1]);
+    if (!predefined.checked) {
+        let start = (document.getElementById("start").value).split(":");
+        let end = (document.getElementById("end").value).split(":");
 
-    let endHour = parseInt(end[0]);
-    let endMinute = parseInt(end[1]);
+        startHour = parseInt(start[0]);
+        startMinute = parseInt(start[1]);
+
+        endHour = parseInt(end[0]);
+        endMinute = parseInt(end[1]);
+    }
 
     drawOuterArc(startHour, startMinute, endHour, endMinute, lightColor, true);
     drawOuterArc(startHour, startMinute, endHour, endMinute, darkColor, false, true);
@@ -178,7 +186,7 @@ const drawLine = (angle, color, clockFaceMinutes = false) => {
     cx.lineWidth = handleWidth;
     cx.strokeStyle = color;
     cx.stroke();
-    
+
 }
 
 const drawOuterArc = (startHour, startMinute, endHour, endMinute, color,

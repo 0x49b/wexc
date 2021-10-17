@@ -15,16 +15,30 @@
 <div>
     <table>
         <tr>
-            <td>Start</td>
-            <td><input type="time" id="start" value="07:00"></td>
+            <td><label for="predefined">Use predefined Times?</label></td>
+            <td><input type="checkbox" id="predefined" checked></td>
         </tr>
         <tr>
-            <td>End</td>
-            <td><input type="time" id="end" value="10:55"></td>
+            <td><label for="start">Start</label></td>
+            <td><input type="time" id="start" value=""></td>
+        </tr>
+        <tr>
+            <td><label for="end">End</label></td>
+            <td><input type="time" id="end" value=""></td>
         </tr>
     </table>
 </div>
+<script>
+    let currentDate = new Date();
+    const startInput = document.getElementById("start");
+    const endInput = document.getElementById("end");
 
+    let endDate = new Date();
+    endDate.setMinutes( currentDate.getMinutes() + (Math.random() * (59 - 1) + 1 ))
+
+    startInput.value = currentDate.getHours() + ":" + currentDate.getMinutes();
+    endInput.value = endDate.getHours() + ":" + endDate.getMinutes();
+</script>
 <script src="clock.js"></script>
 </body>
 </html>
