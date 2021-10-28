@@ -103,12 +103,14 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, l
 }
 
 function drawHighlightLabels(startHour, startMinute, endHour, endMinute, isInSlot) {
-    let startAngle = angleForTime(startHour, startMinute)
-    let endAngle = angleForTime(endHour, endMinute)
+    let startAngle = angleForTime(startHour, startMinute);
+    let endAngle = angleForTime(endHour, endMinute);
 
-    clipArc(startAngle, endAngle)
+    clipArc(startAngle, endAngle);
 
     drawLabels(-90, 235, 30, 24, 1, 0, isInSlot, whiteColor); // highlighted hour Labels
+
+    cx.restore();
 
 }
 
