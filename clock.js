@@ -14,6 +14,27 @@ const handleWidth = 5;
 const handleLengthExtension = 8;
 const radius = canvas.width / 2 - outerArcWidth - 10;
 
+const mousePosition = {x: 0, y: 0};
+canvas.addEventListener("mousemove", e => {
+    // update mouse position
+    mousePosition.x = e.clientX;
+    mousePosition.y = e.clientY;
+    console.log(mousePosition)
+
+    // calculate angle to mouse position
+    delta_x = centerX - mousePosition.x
+    delta_y = mousePosition.y - centerY
+    angle = Math.atan2(delta_x, delta_y)
+    console.log(angle)
+
+    // draw line
+    drawLine(angle - (-90 * Math.PI / 180), 'black', clockFaceMinutes = true)
+
+    // calculate minutes for angle
+    minutes = timeForAngle(angle, clockFaceMinutes = true);
+    console.log(minutes)
+});
+
 const start = () => {
     nextClock()
     setInterval(() => {
@@ -156,6 +177,21 @@ const angleForTime = (hours, minutes, clockFaceMinutes = false) => {
     angle -= angle45Degree;
 
     return angle
+}
+
+const timeForAngle = (angle, clockFaceMinutes = false) => {
+    const fullCircleAngle = 2 * Math.PI;
+    let angleOfMinute;
+
+    if (clockFaceMinutes) {
+        angleOfMinute = fullCircleAngle / 60;
+    } else {
+        angleOfMinute = fullCircleAngle / (24 * 60);
+    }
+
+    let totalMinutes = angle / angleOfMinute;
+
+    return totalMinutes
 }
 
 const drawLine = (angle, color, clockFaceMinutes = false) => {
