@@ -16,8 +16,6 @@ const handleWidth = 5;
 const handleLengthExtension = 8;
 const radius = canvas.width / 2 - outerArcWidth - 10;
 
-const startMinuteInput = "start"
-const endMinuteInput = "end"
 var selectedTime;
 
 const mousePosition = {x: 0, y: 0};
@@ -65,8 +63,8 @@ const nextClock = () => {
     let endMinute = 55;
 
     if (!predefined.checked) {
-        let start = (document.getElementById("start").value).split(":");
-        let end = (document.getElementById("end").value).split(":");
+        let start = (document.getElementById("startTime").value).split(":");
+        let end = (document.getElementById("endTime").value).split(":");
 
         startHour = parseInt(start[0]);
         startMinute = parseInt(start[1]);
