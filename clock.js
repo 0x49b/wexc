@@ -5,6 +5,8 @@ const lightColor = '#ADCEFF'
 const darkColor = '#4485E8'
 const greenColor = '#90F0B6';
 const redColor = '#F09090';
+const whiteColor = '#FFF'
+const greyColor = '#6D6D6D'
 
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -43,6 +45,7 @@ canvas.addEventListener("mousemove", e => {
 const onClickRadioButton = (button) => {
     selectedTime = button.value
 }
+const none = (_) => false;
 
 const start = () => {
     nextClock()
@@ -76,8 +79,18 @@ const nextClock = () => {
     drawOuterArc(startHour, startMinute, endHour, endMinute, darkColor, false, true);
     drawInnerArc(startMinute, endMinute, lightColor, true)
 
-    drawLabels(-75, 235, 30, 24, 1, 1); // Hour Labels
-    drawLabels(-90, 155, 18, 12, 5, 0); // Minute Labels
+    let isInSlot = (hour) => {
+        if (hour === startHour && startMinute > 0) return false; // if start not 'xx:00'
+        if (hour >= startHour && hour <= endHour) return true; // slot not passing '00:00' case 1
+        if (endHour < startHour && hour <= endHour) return true; // slot passing '00:00' case 2
+        if (endHour < startHour && hour >= startHour) return true; // slot passing '00:00' case 3
+        return false;
+    }
+
+    drawLabels(-90, 235, 30, 24, 1, 0, isInSlot, greyColor); // hour Labels
+    drawLabels(-90, 155, 18, 12, 5, 0, none, greyColor); // minute Labels
+    drawHighlightLabels(startHour, startMinute, endHour, endMinute, isInSlot)
+
     drawMiddlePoint();
 }
 
@@ -91,8 +104,10 @@ const getRadians = (degree) => (degree * Math.PI) / 180
  * @param {number} numOfLabels
  * @param {number} increment
  * @param {number} labelStart
+ * @param {function} isInSlot
+ * @param {String} color
  */
-const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, labelStart) => {
+const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, labelStart, isInSlot, color) => {
     const xCorrex = -(fontSize / 2); // Because of the FontSize to position it correct over the Strokes
     const yCorrex = (fontSize / 3);
     let labelText = labelStart;
@@ -101,8 +116,12 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, l
     for (let i = 0; i < numOfLabels; i++) {
         cx.save();
         cx.translate(300, 300);
-        cx.fillStyle = "#6D6D6D";
-        cx.font = '300 ' + fontSize + 'px robotolight';
+        cx.fillStyle = color;
+        if (isInSlot(i)) {
+            cx.font = '400 ' + fontSize + 'px robotobold';
+        } else {
+            cx.font = '400 ' + fontSize + 'px robotolight';
+        }
         let x = labelRadius * Math.cos(getRadians(labelAngle + (angleBetweenLabels * i))) + xCorrex;
         let y = labelRadius * Math.sin(getRadians(labelAngle + (angleBetweenLabels * i))) + yCorrex;
         cx.fillText(labelText.toString(), x, y);// Text
@@ -110,6 +129,18 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, l
 
         labelText += increment;
     }
+}
+
+function drawHighlightLabels(startHour, startMinute, endHour, endMinute, isInSlot) {
+    let startAngle = angleForTime(startHour, startMinute);
+    let endAngle = angleForTime(endHour, endMinute);
+
+    clipArc(startAngle, endAngle);
+
+    drawLabels(-90, 235, 30, 24, 1, 0, isInSlot, whiteColor); // highlighted hour Labels
+
+    cx.restore();
+
 }
 
 
@@ -286,4 +317,14 @@ const drawArc = (startAngle, endAngle, color, drawInner = false) => {
         cx.stroke();
     }
     cx.restore();
+}
+
+const clipArc = (startAngle, endAngle) => {
+    cx.save();
+    cx.beginPath();
+
+    cx.moveTo(centerX, centerY);
+    cx.arc(centerX, centerY, radius+outerArcWidth, startAngle, endAngle);
+
+    cx.clip();
 }
