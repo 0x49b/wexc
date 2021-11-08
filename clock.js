@@ -14,26 +14,35 @@ const handleWidth = 5;
 const handleLengthExtension = 8;
 const radius = canvas.width / 2 - outerArcWidth - 10;
 
+const startMinuteInput = "start"
+const endMinuteInput = "end"
+var selectedTime;
+
 const mousePosition = {x: 0, y: 0};
 canvas.addEventListener("mousemove", e => {
-    // update mouse position
-    mousePosition.x = e.clientX;
-    mousePosition.y = e.clientY;
-    console.log(mousePosition)
+    if(selectedTime) {
+        // update mouse position
+        mousePosition.x = e.clientX;
+        mousePosition.y = e.clientY;
 
-    // calculate angle to mouse position
-    delta_x = centerX - mousePosition.x
-    delta_y = mousePosition.y - centerY
-    angle = Math.atan2(delta_x, delta_y)
-    console.log(angle)
+        // calculate angle to mouse position
+        delta_x = centerX - mousePosition.x
+        delta_y = mousePosition.y - centerY
+        angle = Math.atan2(delta_x, delta_y)
 
-    // draw line
-    drawLine(angle - (-90 * Math.PI / 180), 'black', clockFaceMinutes = true)
+        // calculate minutes for angle
+        minutes = timeForAngle(angle, clockFaceMinutes = true);
+        if (minutes < 10) { minutes = "0"+minutes; }
+        if (minutes >= 60) { minutes = "59"; }
 
-    // calculate minutes for angle
-    minutes = timeForAngle(angle, clockFaceMinutes = true);
-    console.log(minutes)
+        const startInput = document.getElementById(selectedTime + "Time");
+        startInput.value = startInput.value.replace(/..$/, minutes)
+    }
 });
+
+const onClickRadioButton = (button) => {
+    selectedTime = button.value
+}
 
 const start = () => {
     nextClock()
@@ -180,18 +189,16 @@ const angleForTime = (hours, minutes, clockFaceMinutes = false) => {
 }
 
 const timeForAngle = (angle, clockFaceMinutes = false) => {
-    const fullCircleAngle = 2 * Math.PI;
-    let angleOfMinute;
+    var degree = angle * 180 / Math.PI + 180
 
+    let timePerDegree;
     if (clockFaceMinutes) {
-        angleOfMinute = fullCircleAngle / 60;
+        timePerDegree = 360 / 60;
     } else {
-        angleOfMinute = fullCircleAngle / (24 * 60);
+        timePerDegree = 360 / (24 * 60);
     }
 
-    let totalMinutes = angle / angleOfMinute;
-
-    return totalMinutes
+    return Math.round(degree / timePerDegree);
 }
 
 const drawLine = (angle, color, clockFaceMinutes = false) => {
