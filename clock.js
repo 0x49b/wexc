@@ -16,6 +16,33 @@ const handleWidth = 5;
 const handleLengthExtension = 8;
 const radius = canvas.width / 2 - outerArcWidth - 10;
 
+var selectedTime;
+
+const mousePosition = {x: 0, y: 0};
+canvas.addEventListener("mousemove", e => {
+    if(selectedTime) {
+        // update mouse position
+        mousePosition.x = e.clientX;
+        mousePosition.y = e.clientY;
+
+        // calculate angle to mouse position
+        delta_x = centerX - mousePosition.x
+        delta_y = mousePosition.y - centerY
+        angle = Math.atan2(delta_x, delta_y)
+
+        // calculate minutes for angle
+        minutes = timeForAngle(angle, clockFaceMinutes = true);
+        if (minutes < 10) { minutes = "0"+minutes; }
+        if (minutes >= 60) { minutes = "59"; }
+
+        const startInput = document.getElementById(selectedTime + "Time");
+        startInput.value = startInput.value.replace(/..$/, minutes)
+    }
+});
+
+const onClickRadioButton = (button) => {
+    selectedTime = button.value
+}
 const none = (_) => false;
 
 const start = () => {
@@ -36,8 +63,8 @@ const nextClock = () => {
     let endMinute = 55;
 
     if (!predefined.checked) {
-        let start = (document.getElementById("start").value).split(":");
-        let end = (document.getElementById("end").value).split(":");
+        let start = (document.getElementById("startTime").value).split(":");
+        let end = (document.getElementById("endTime").value).split(":");
 
         startHour = parseInt(start[0]);
         startMinute = parseInt(start[1]);
@@ -188,6 +215,19 @@ const angleForTime = (hours, minutes, clockFaceMinutes = false) => {
     angle -= angle45Degree;
 
     return angle
+}
+
+const timeForAngle = (angle, clockFaceMinutes = false) => {
+    var degree = angle * 180 / Math.PI + 180
+
+    let timePerDegree;
+    if (clockFaceMinutes) {
+        timePerDegree = 360 / 60;
+    } else {
+        timePerDegree = 360 / (24 * 60);
+    }
+
+    return Math.round(degree / timePerDegree);
 }
 
 const drawLine = (angle, color, clockFaceMinutes = false) => {

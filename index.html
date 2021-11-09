@@ -19,19 +19,28 @@
             <td><input type="checkbox" id="predefined" checked></td>
         </tr>
         <tr>
-            <td><label for="start">Start</label></td>
-            <td><input type="time" id="start" value=""></td>
+            <td><label for="startTime">Start</label></td>
+            <td><input type="time" id="startTime" value=""></td>
         </tr>
         <tr>
-            <td><label for="end">End</label></td>
-            <td><input type="time" id="end" value=""></td>
+            <td><label for="endTime">End</label></td>
+            <td><input type="time" id="endTime" value=""></td>
         </tr>
     </table>
+    <div>
+        <input type="radio" id="setStartMinute" name="updateTime" onclick="onClickRadioButton(this);" value="start">
+        <label for="setStartMinute">Update Start Minute</label>
+      </div>
+      
+      <div>
+        <input type="radio" id="setEndMinute" name="updateTime" onclick="onClickRadioButton(this);" value="end">
+        <label for="setEndMinute">Update End Minute</label>
+      </div>
 </div>
 <script>
     let currentDate = new Date();
-    const startInput = document.getElementById("start");
-    const endInput = document.getElementById("end");
+    const startInput = document.getElementById("startTime");
+    const endInput = document.getElementById("endTime");
 
     let endDate = new Date();
     endDate.setMinutes( currentDate.getMinutes() + (Math.random() * (59 - 1) + 1 ))
