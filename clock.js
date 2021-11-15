@@ -16,14 +16,100 @@ const handleWidth = 5;
 const handleLengthExtension = 8;
 const radius = canvas.width / 2 - outerArcWidth - 10;
 
-var selectedTime;
-
+let selectedTime;
 const mousePosition = {x: 0, y: 0};
+
+const tolerance = 10;
+
+
+let handles = [];
+
+
+function Handle(name, x, y, color, angle, clockFaceMinutes = false) {
+    this.name = name;
+    this.ex = x;
+    this.ey = y;
+    this.mx = canvas.width / 2
+    this.my = canvas.height / 2
+    this.color = color;
+    this.angle = angle;
+    this.clockFaceMinutes = clockFaceMinutes;
+}
+
+Object.prototype.draw = function () {
+    cx.beginPath();
+    cx.lineWidth = handleWidth;
+    cx.strokeStyle = this.color;
+    cx.moveTo(this.mx, this.my);
+    cx.lineTo(this.ex, this.ey);
+    cx.stroke();
+    cx.closePath();
+
+}
+
+// https://stackoverflow.com/questions/24043967/detect-if-mouse-is-over-an-object-inside-canvas
+const mouseNearHandle = (line, x, y) => {
+    const lerp = (a, b, x) => (a + x * (b - a));
+    let dx = line.mx - line.ex;
+    let dy = line.my - line.ey;
+    let t = ((x - line.ex) * dx + (y - line.ey) * dy) / (dx * dx + dy * dy);
+    let lineX = lerp(line.ex, line.mx, t);
+    let lineY = lerp(line.ey, line.my, t);
+    return ({x: lineX, y: lineY});
+}
+
+
+let downHandle = null;
+canvas.addEventListener("mousedown", e => {
+
+    // Check if we are on a line and handle the line
+    handles.forEach(h => {
+        let linepoint = mouseNearHandle(h, mousePosition.x, mousePosition.y);
+        let dx = mousePosition.x - linepoint.x;
+        let dy = mousePosition.y - linepoint.y;
+        let distance = Math.abs(Math.sqrt(dx * dx + dy * dy));
+        if (distance < tolerance) {
+            console.log("Inside the line");
+            document.getElementById("setStartMinute").checked = true;
+            downHandle = h;
+        } else {
+            console.log("Outside");
+            document.getElementById("setStartMinute").checked = false;
+        }
+    });
+});
+
+canvas.addEventListener("mouseup", e => {
+    downHandle = null;
+});
+
+function Vector(x, y) {
+    return {
+        x: x,
+        y: y
+    }
+}
+
 canvas.addEventListener("mousemove", e => {
-    if(selectedTime) {
-        // update mouse position
-        mousePosition.x = e.clientX;
-        mousePosition.y = e.clientY;
+
+    // update MousePosition
+    mousePosition.x = e.clientX;
+    mousePosition.y = e.clientY;
+
+    if (downHandle != null) {
+        // calculate angle to mouse position
+        let delta_x = mousePosition.x - centerX
+        let delta_y = centerY - mousePosition.y
+        let angle = Math.atan2(delta_x, delta_y)
+
+        let r = Math.abs(Math.sqrt((downHandle.ex - centerX) ** 2 + (downHandle.ey - centerY) ** 2))
+
+        downHandle.ex = (downHandle.mx + r * Math.cos(((angle))));
+        downHandle.ey = (downHandle.my + r * Math.sin(((angle))));
+        console.log(downHandle.ex)
+    }
+
+    /*if (selectedTime) {
 
         // calculate angle to mouse position
         delta_x = centerX - mousePosition.x
@@ -32,12 +118,16 @@ canvas.addEventListener("mousemove", e => {
 
         // calculate minutes for angle
         minutes = timeForAngle(angle, clockFaceMinutes = true);
-        if (minutes < 10) { minutes = "0"+minutes; }
-        if (minutes >= 60) { minutes = "59"; }
+        if (minutes < 10) {
+            minutes = "0" + minutes;
+        }
+        if (minutes >= 60) {
+            minutes = "59";
+        }
 
         const startInput = document.getElementById(selectedTime + "Time");
         startInput.value = startInput.value.replace(/..$/, minutes)
-    }
+    }*/
 });
 
 const onClickRadioButton = (button) => {
@@ -47,6 +137,8 @@ const none = (_) => false;
 
 const start = () => {
     nextClock()
+    handles.push(new Handle("start", canvas.width / 2, 50, darkColor, 2 * Math.PI, false))
+
     setInterval(() => {
         nextClock()
     }, 1000 / 20);
@@ -55,6 +147,9 @@ const start = () => {
 const nextClock = () => {
     cx.clearRect(0, 0, canvas.width, canvas.height)
     drawClockFace();
+    handles.forEach(h => {
+        h.draw()
+    })
 
     const predefined = document.getElementById("predefined");
     let startHour = 7;
@@ -218,7 +313,7 @@ const angleForTime = (hours, minutes, clockFaceMinutes = false) => {
 }
 
 const timeForAngle = (angle, clockFaceMinutes = false) => {
-    var degree = angle * 180 / Math.PI + 180
+    let degree = angle * 180 / Math.PI + 180
 
     let timePerDegree;
     if (clockFaceMinutes) {
@@ -254,12 +349,12 @@ const drawLine = (angle, color, clockFaceMinutes = false) => {
         cx.moveTo(startX, startY);
         cx.lineTo(endX, endY);
     }
-
     cx.lineWidth = handleWidth;
     cx.strokeStyle = color;
     cx.stroke();
 
 }
+
 
 const drawOuterArc = (startHour, startMinute, endHour, endMinute, color,
                       drawLines = false, fullHoursOnly = false) => {
@@ -322,7 +417,7 @@ const clipArc = (startAngle, endAngle) => {
     cx.beginPath();
 
     cx.moveTo(centerX, centerY);
-    cx.arc(centerX, centerY, radius+outerArcWidth, startAngle, endAngle);
+    cx.arc(centerX, centerY, radius + outerArcWidth, startAngle, endAngle);
 
     cx.clip();
 }
