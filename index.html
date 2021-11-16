@@ -47,8 +47,8 @@
     let endDate = new Date();
     endDate.setMinutes( currentDate.getMinutes() + (Math.random() * (59 - 1) + 1 ))
 
-    startInput.value = null//currentDate.getHours() + ":" + currentDate.getMinutes();
-    endInput.value = null//endDate.getHours() + ":" + endDate.getMinutes();
+    startInput.value = currentDate.getHours() + ":" + currentDate.getMinutes();
+    endInput.value = endDate.getHours() + ":" + endDate.getMinutes();
 </script>
 <script src="clock.js"></script>
 </body>

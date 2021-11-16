@@ -155,6 +155,7 @@ const none = (_) => false;
 
 const start = () => {
     nextClock()
+
     handles.push(new Handle("startHour", canvas.width / 2, 50, darkColor, 2 * Math.PI, 250, false))
 
     setInterval(() => {
@@ -165,6 +166,7 @@ const start = () => {
 const nextClock = () => {
     cx.clearRect(0, 0, canvas.width, canvas.height)
     drawClockFace();
+
     handles.forEach(h => {
         h.draw()
     })
@@ -235,7 +237,8 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, l
         }
         let x = labelRadius * Math.cos(getRadians(labelAngle + (angleBetweenLabels * i))) + xCorrex;
         let y = labelRadius * Math.sin(getRadians(labelAngle + (angleBetweenLabels * i))) + yCorrex;
-        cx.fillText(labelText.toString(), x, y);// Text
+        let text = (labelText.toString().length === 1) ?  ` ${labelText}` : labelText;
+        cx.fillText(text, x, y);// Text
         cx.restore();
 
         labelText += increment;
