@@ -1,5 +1,6 @@
 const canvas = document.getElementById("canvas");
 const cx = canvas.getContext("2d");
+const selectTimeButton = document.getElementById("selectTimeButton");
 
 const lightColor = '#ADCEFF'
 const darkColor = '#4485E8'
@@ -20,12 +21,20 @@ let selectedTime;
 const mousePosition = {x: 0, y: 0};
 
 const tolerance = 10;
-
-
+const nullvector = {
+    x: canvas.width / 2,
+    y: 0
+}
 let handles = [];
 
+let selectedTimeWithHandle = {
+    startHour: null,
+    startMinute: null,
+    endHour: null,
+    endMinute: null
+}
 
-function Handle(name, x, y, color, angle, clockFaceMinutes = false) {
+function Handle(name, x, y, color, angle, length, clockFaceMinutes = false) {
     this.name = name;
     this.ex = x;
     this.ey = y;
@@ -33,6 +42,7 @@ function Handle(name, x, y, color, angle, clockFaceMinutes = false) {
     this.my = canvas.height / 2
     this.color = color;
     this.angle = angle;
+    this.length = length;
     this.clockFaceMinutes = clockFaceMinutes;
 }
 
@@ -44,7 +54,6 @@ Object.prototype.draw = function () {
     cx.lineTo(this.ex, this.ey);
     cx.stroke();
     cx.closePath();
-
 }
 
 // https://stackoverflow.com/questions/24043967/detect-if-mouse-is-over-an-object-inside-canvas
@@ -69,7 +78,7 @@ canvas.addEventListener("mousedown", e => {
         let dy = mousePosition.y - linepoint.y;
         let distance = Math.abs(Math.sqrt(dx * dx + dy * dy));
         if (distance < tolerance) {
-            console.log("Inside the line");
+            console.log("Inside the line. handle.x: ", h.ex, " handle.y: ", h.ey);
             document.getElementById("setStartMinute").checked = true;
             downHandle = h;
         } else {
@@ -79,16 +88,28 @@ canvas.addEventListener("mousedown", e => {
     });
 });
 
+
+const dotProduct = (ax, ay, bx, by) => ax * bx + ay * by
+const valueOfVector = (ax, ay) => Math.sqrt(ax ** 2 + ay ** 2);
+
+
+const calcLineAngle = handle => {
+    return dotProduct(nullvector.x, nullvector.y, handle.ex, handle.ey) / (valueOfVector(nullvector.x, nullvector.y) * valueOfVector(handle.ex, handle.ey));
+}
+
 canvas.addEventListener("mouseup", e => {
-    downHandle = null;
+    if (downHandle != null) {
+        console.log("currentA ", calcLineAngle(downHandle));
+        downHandle = null
+    }
 });
 
-function Vector(x, y) {
-    return {
-        x: x,
-        y: y
-    }
-}
+const getHandleForName = name => handles.filter(h => h.name === name)[0]
+
+selectTimeButton.addEventListener("click", () => {
+    console.log(getHandleForName("startHour"))
+})
+
 
 canvas.addEventListener("mousemove", e => {
 
@@ -100,13 +121,10 @@ canvas.addEventListener("mousemove", e => {
         // calculate angle to mouse position
         let delta_x = mousePosition.x - centerX
         let delta_y = centerY - mousePosition.y
-        let angle = Math.atan2(delta_x, delta_y)
+        let angle = Math.atan2(delta_x, delta_y) - Math.PI / 2
 
-        let r = Math.abs(Math.sqrt((downHandle.ex - centerX) ** 2 + (downHandle.ey - centerY) ** 2))
-
-        downHandle.ex = (downHandle.mx + r * Math.cos(((angle))));
-        downHandle.ey = (downHandle.my + r * Math.sin(((angle))));
-        console.log(downHandle.ex)
+        downHandle.ex = downHandle.mx + downHandle.length * Math.cos(angle);
+        downHandle.ey = downHandle.my + downHandle.length * Math.sin(angle);
     }
 
     /*if (selectedTime) {
@@ -137,7 +155,7 @@ const none = (_) => false;
 
 const start = () => {
     nextClock()
-    handles.push(new Handle("start", canvas.width / 2, 50, darkColor, 2 * Math.PI, false))
+    handles.push(new Handle("startHour", canvas.width / 2, 50, darkColor, 2 * Math.PI, 250, false))
 
     setInterval(() => {
         nextClock()
@@ -356,8 +374,7 @@ const drawLine = (angle, color, clockFaceMinutes = false) => {
 }
 
 
-const drawOuterArc = (startHour, startMinute, endHour, endMinute, color,
-                      drawLines = false, fullHoursOnly = false) => {
+const drawOuterArc = (startHour, startMinute, endHour, endMinute, color, drawLines = false, fullHoursOnly = false) => {
 
     let startAngle;
     let endAngle;
