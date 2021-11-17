@@ -16,7 +16,7 @@
     <table>
         <tr>
             <td><label for="predefined">Use predefined Times?</label></td>
-            <td><input type="checkbox" id="predefined" checked></td>
+            <td><input type="checkbox" id="predefined"></td>
         </tr>
         <tr>
             <td><label for="startTime">Start</label></td>
@@ -36,6 +36,8 @@
         <input type="radio" id="setEndMinute" name="updateTime" onclick="onClickRadioButton(this);" value="end">
         <label for="setEndMinute">Update End Minute</label>
       </div>
+
+        <button id="selectTimeButton">Select Time chosen Time</button>
 </div>
 <script>
     let currentDate = new Date();
