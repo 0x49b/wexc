@@ -128,6 +128,7 @@ canvas.addEventListener("mousemove", e => {
 
         let angle = Math.atan2(delta_x, delta_y)
         angle = angle <= 0 ? Math.PI * 2 + angle : angle; // convert negativ to positiv angle
+        let minutes = timeForAngle(angle, clockFaceMinutes = true)
 
         // use angle of time to get snappy behavior for minute ticks
         let angleOfTime = angleForTime(0, minutes, true)
