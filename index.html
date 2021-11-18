@@ -1,55 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Clock</title>
-    <link rel="stylesheet"  href="font/stylesheet.css">
+    <link rel="stylesheet" href="font/stylesheet.css">
     <style>
-        body{font-family:'robotolight', sans-serif}canvas{font-family:'Roboto', sans-serif;background-color:#e5e5e5;border-radius:5%}
+        body {
+            font-family: 'robotolight', sans-serif
+        }
+
+        canvas {
+            font-family: 'Roboto', sans-serif;
+            background-color: #e5e5e5;
+            border-radius: 5%
+        }
     </style>
 </head>
+
 <body onload="start()">
-<div>
     <canvas id="canvas" width="600" height="600"></canvas>
-</div>
-<div>
-    <table>
-        <tr>
-            <td><label for="predefined">Use predefined Times?</label></td>
-            <td><input type="checkbox" id="predefined"></td>
-        </tr>
-        <tr>
-            <td><label for="startTime">Start</label></td>
-            <td><input type="time" id="startTime" value=""></td>
-        </tr>
-        <tr>
-            <td><label for="endTime">End</label></td>
-            <td><input type="time" id="endTime" value=""></td>
-        </tr>
-    </table>
-    <div>
-        <input type="radio" id="setStartMinute" name="updateTime" onclick="onClickRadioButton(this);" value="start">
-        <label for="setStartMinute">Update Start Minute</label>
-      </div>
-      
-      <div>
-        <input type="radio" id="setEndMinute" name="updateTime" onclick="onClickRadioButton(this);" value="end">
-        <label for="setEndMinute">Update End Minute</label>
-      </div>
-
-        <button id="selectTimeButton">Select Time chosen Time</button>
-</div>
-<script>
-    let currentDate = new Date();
-    const startInput = document.getElementById("startTime");
-    const endInput = document.getElementById("endTime");
-
-    let endDate = new Date();
-    endDate.setMinutes( currentDate.getMinutes() + (Math.random() * (59 - 1) + 1 ))
-
-    startInput.value = currentDate.getHours() + ":" + currentDate.getMinutes();
-    endInput.value = endDate.getHours() + ":" + endDate.getMinutes();
-</script>
-<script src="clock.js"></script>
+    <script src="clock.js"></script>
 </body>
+
 </html>
