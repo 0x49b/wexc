@@ -97,18 +97,18 @@ const mouseOnHour = coordinates => {
 }
 
 let downHandle = null;
+
+function resetTime() {
+    selectedTimeWithHandle.startHour = null
+    selectedTimeWithHandle.startMinute = null
+    selectedTimeWithHandle.endHour = null
+    selectedTimeWithHandle.endMinute = null
+    handles = []
+}
+
 canvas.addEventListener("mousedown", e => {
     mousePosition.x = e.clientX;
     mousePosition.y = e.clientY;
-
-    if (selectedTimeWithHandle.startHour === null) {
-        selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
-    } else if (selectedTimeWithHandle.endHour === null) {
-        selectedTimeWithHandle.endHour = mouseOnHour(mousePosition)
-    } else if (handles.length === 0) {
-        handles.push(new Handle("startMinute", canvas.width / 2, 50, greenColor, 2 * Math.PI, 200))
-        handles.push(new Handle("endMinute", canvas.width / 2, 50, redColor, 2 * Math.PI, 200))
-    }
 
     // Check if we are on a line and handle the line
     handles.forEach(h => {
@@ -118,6 +118,7 @@ canvas.addEventListener("mousedown", e => {
         let distance = Math.abs(Math.sqrt(dx * dx + dy * dy));
         if (distance < tolerance) {
             downHandle = h;
+            h.clicked = true
         }
     });
 });
@@ -132,6 +133,23 @@ const calcLineAngle = handle => {
 }
 
 canvas.addEventListener("mouseup", _ => {
+    if (selectedTimeWithHandle.startHour === null && mouseOnHour(mousePosition) >= 0) {
+        // first click on hourlabel -> set startHour
+        selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
+    } else if (selectedTimeWithHandle.endHour === null  && mouseOnHour(mousePosition) >= 0) {
+        // second click on hourlabel -> set endHour + show handle
+        selectedTimeWithHandle.endHour = mouseOnHour(mousePosition)
+        handles.push(new Handle("startMinute", canvas.width / 2, 50, greenColor, 2 * Math.PI, 200))
+    } else if (handles.length === 1 && downHandle != null) {
+        // first handle set -> show second handle
+        handles.push(new Handle("endMinute", canvas.width / 2, 50, redColor, 2 * Math.PI, 200))
+    } else if (mouseOnHour(mousePosition) > 0 && downHandle === null){
+        // click on hourlabel && no handle selected -> reset
+            resetTime()
+            selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
+        }
+
+    // set minutes according to handle position
     if (downHandle != null) {
         downHandle.angle = calcLineAngle(downHandle)
         downHandle = null
