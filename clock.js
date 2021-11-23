@@ -1,13 +1,12 @@
 const canvas = document.getElementById("canvas");
 const cx = canvas.getContext("2d");
-const selectTimeButton = document.getElementById("selectTimeButton");
 
 const lightColor = '#ADCEFF'
 const darkColor = '#4485E8'
 const greenColor = '#90F0B6';
 const redColor = '#F09090';
-const whiteColor = '#FFF'
-const greyColor = '#6D6D6D'
+const whiteColor = '#FFF';
+const greyColor = '#6D6D6D';
 
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -17,7 +16,6 @@ const handleWidth = 5;
 const handleLengthExtension = 8;
 const radius = canvas.width / 2 - outerArcWidth - 10;
 
-let selectedTime;
 const mousePosition = {x: 0, y: 0};
 
 const tolerance = 10;
@@ -26,6 +24,7 @@ const nullvector = {
     y: 0
 }
 let handles = [];
+let clickableHours = [];
 
 let selectedTimeWithHandle = {
     startHour: null,
@@ -34,16 +33,28 @@ let selectedTimeWithHandle = {
     endMinute: null
 }
 
-function Handle(name, x, y, color, angle, length, clockFaceMinutes = false) {
+const LabelTypes = {
+    HOUR: "Hour",
+    MINUTE: "Minute",
+    HOUR_HIGHLIGHT: "Highlighted_Hour"
+}
+
+function getMousePosOnCanvas(coordinates) {
+    let rect = canvas.getBoundingClientRect();
+    return {
+        x: coordinates.x - rect.left,
+        y: coordinates.y - rect.top
+    };
+}
+
+function Handle(name, x, y, color, angle, length) {
     this.name = name;
     this.ex = x;
     this.ey = y;
     this.mx = canvas.width / 2
     this.my = canvas.height / 2
     this.color = color;
-    this.angle = angle;
     this.length = length;
-    this.clockFaceMinutes = clockFaceMinutes;
 }
 
 Object.prototype.draw = function () {
@@ -67,9 +78,37 @@ const mouseNearHandle = (line, x, y) => {
     return ({x: lineX, y: lineY});
 }
 
+const mouseOnHour = coordinates => {
+    let tolerance = 20
+    let clickOnCanvas = getMousePosOnCanvas(coordinates)
+    let hourClicked = -1
+
+    clickableHours.forEach((hourLabel, hour) => {
+        let sx = hourLabel.x - tolerance
+        let sy = hourLabel.y - tolerance
+        let ex = hourLabel.x + tolerance
+        let ey = hourLabel.y + tolerance
+
+        if (clickOnCanvas.x >= sx && clickOnCanvas.x <= ex && clickOnCanvas.y >= sy && clickOnCanvas.y <= ey) {
+            hourClicked = hour
+        }
+    })
+    return hourClicked
+}
 
 let downHandle = null;
+
+function resetTime() {
+    selectedTimeWithHandle.startHour = null
+    selectedTimeWithHandle.startMinute = null
+    selectedTimeWithHandle.endHour = null
+    selectedTimeWithHandle.endMinute = null
+    handles = []
+}
+
 canvas.addEventListener("mousedown", e => {
+    mousePosition.x = e.clientX;
+    mousePosition.y = e.clientY;
 
     // Check if we are on a line and handle the line
     handles.forEach(h => {
@@ -78,12 +117,8 @@ canvas.addEventListener("mousedown", e => {
         let dy = mousePosition.y - linepoint.y;
         let distance = Math.abs(Math.sqrt(dx * dx + dy * dy));
         if (distance < tolerance) {
-            console.log("Inside the line. handle.x: ", h.ex, " handle.y: ", h.ey);
-            document.getElementById("setStartMinute").checked = true;
             downHandle = h;
-        } else {
-            console.log("Outside");
-            document.getElementById("setStartMinute").checked = false;
+            h.clicked = true
         }
     });
 });
@@ -97,19 +132,29 @@ const calcLineAngle = handle => {
     return dotProduct(nullvector.x, nullvector.y, handle.ex, handle.ey) / (valueOfVector(nullvector.x, nullvector.y) * valueOfVector(handle.ex, handle.ey));
 }
 
-canvas.addEventListener("mouseup", e => {
+canvas.addEventListener("mouseup", _ => {
+    if (selectedTimeWithHandle.startHour === null && mouseOnHour(mousePosition) >= 0) {
+        // first click on hourlabel -> set startHour
+        selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
+    } else if (selectedTimeWithHandle.endHour === null  && mouseOnHour(mousePosition) >= 0) {
+        // second click on hourlabel -> set endHour + show handle
+        selectedTimeWithHandle.endHour = mouseOnHour(mousePosition)
+        handles.push(new Handle("startMinute", canvas.width / 2, 50, greenColor, 2 * Math.PI, 200))
+    } else if (handles.length === 1 && downHandle != null) {
+        // first handle set -> show second handle
+        handles.push(new Handle("endMinute", canvas.width / 2, 50, redColor, 2 * Math.PI, 200))
+    } else if (mouseOnHour(mousePosition) > 0 && downHandle === null){
+        // click on hourlabel && no handle selected -> reset
+            resetTime()
+            selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
+        }
+
+    // set minutes according to handle position
     if (downHandle != null) {
-        console.log("currentA ", calcLineAngle(downHandle));
+        downHandle.angle = calcLineAngle(downHandle)
         downHandle = null
     }
 });
-
-const getHandleForName = name => handles.filter(h => h.name === name)[0]
-
-selectTimeButton.addEventListener("click", () => {
-    console.log(getHandleForName("startHour"))
-})
-
 
 canvas.addEventListener("mousemove", e => {
 
@@ -121,43 +166,29 @@ canvas.addEventListener("mousemove", e => {
         // calculate angle to mouse position
         let delta_x = mousePosition.x - centerX
         let delta_y = centerY - mousePosition.y
-        let angle = Math.atan2(delta_x, delta_y) - Math.PI / 2
 
-        downHandle.ex = downHandle.mx + downHandle.length * Math.cos(angle);
-        downHandle.ey = downHandle.my + downHandle.length * Math.sin(angle);
+        let angle = Math.atan2(delta_x, delta_y)
+        angle = angle <= 0 ? Math.PI * 2 + angle : angle; // convert negativ to positiv angle
+        let minutes = timeForAngle(angle, true)
+
+        // use angle of time to get snappy behavior for minute ticks
+        let angleOfTime = angleForTime(0, minutes, true)
+        downHandle.ex = downHandle.mx + downHandle.length * Math.cos(angleOfTime);
+        downHandle.ey = downHandle.my + downHandle.length * Math.sin(angleOfTime);
+
+        // set start or end minute
+        if (downHandle.name === "startMinute") {
+            selectedTimeWithHandle.startMinute = minutes;
+        } else if (downHandle.name === "endMinute") {
+            selectedTimeWithHandle.endMinute = minutes;
+        }
     }
-
-    /*if (selectedTime) {
-
-        // calculate angle to mouse position
-        delta_x = centerX - mousePosition.x
-        delta_y = mousePosition.y - centerY
-        angle = Math.atan2(delta_x, delta_y)
-
-        // calculate minutes for angle
-        minutes = timeForAngle(angle, clockFaceMinutes = true);
-        if (minutes < 10) {
-            minutes = "0" + minutes;
-        }
-        if (minutes >= 60) {
-            minutes = "59";
-        }
-
-        const startInput = document.getElementById(selectedTime + "Time");
-        startInput.value = startInput.value.replace(/..$/, minutes)
-    }*/
 });
 
-const onClickRadioButton = (button) => {
-    selectedTime = button.value
-}
 const none = (_) => false;
 
 const start = () => {
     nextClock()
-
-    handles.push(new Handle("startHour", canvas.width / 2, 50, darkColor, 2 * Math.PI, 250, false))
-
     setInterval(() => {
         nextClock()
     }, 1000 / 20);
@@ -167,42 +198,32 @@ const nextClock = () => {
     cx.clearRect(0, 0, canvas.width, canvas.height)
     drawClockFace();
 
-    handles.forEach(h => {
-        h.draw()
-    })
-
-    const predefined = document.getElementById("predefined");
-    let startHour = 7;
-    let startMinute = 0;
-    let endHour = 10;
-    let endMinute = 55;
-
-    if (!predefined.checked) {
-        let start = (document.getElementById("startTime").value).split(":");
-        let end = (document.getElementById("endTime").value).split(":");
-
-        startHour = parseInt(start[0]);
-        startMinute = parseInt(start[1]);
-
-        endHour = parseInt(end[0]);
-        endMinute = parseInt(end[1]);
-    }
+    const startHour = selectedTimeWithHandle.startHour;
+    const startMinute = selectedTimeWithHandle.startMinute;
+    const endHour = selectedTimeWithHandle.endHour;
+    const endMinute = selectedTimeWithHandle.endMinute;
 
     drawOuterArc(startHour, startMinute, endHour, endMinute, lightColor, true);
     drawOuterArc(startHour, startMinute, endHour, endMinute, darkColor, false, true);
     drawInnerArc(startMinute, endMinute, lightColor, true)
 
     let isInSlot = (hour) => {
+        if (!startHour) return false;
+        if (!endHour && startHour === hour) return true; // only start hour selected
+        if (!endHour) return false;
         if (hour === startHour && startMinute > 0) return false; // if start not 'xx:00'
         if (hour >= startHour && hour <= endHour) return true; // slot not passing '00:00' case 1
         if (endHour < startHour && hour <= endHour) return true; // slot passing '00:00' case 2
         if (endHour < startHour && hour >= startHour) return true; // slot passing '00:00' case 3
         return false;
     }
-
-    drawLabels(-90, 235, 30, 24, 1, 0, isInSlot, greyColor); // hour Labels
-    drawLabels(-90, 155, 18, 12, 5, 0, none, greyColor); // minute Labels
+    drawLabels(LabelTypes.HOUR, isInSlot); // hour Labels
+    drawLabels(LabelTypes.MINUTE, none); // minute Labels
     drawHighlightLabels(startHour, startMinute, endHour, endMinute, isInSlot)
+
+    handles.forEach(h => {
+        h.draw()
+    })
 
     drawMiddlePoint();
 }
@@ -211,16 +232,29 @@ const getRadians = (degree) => (degree * Math.PI) / 180
 
 /**
  *
- * @param {number} labelAngle
- * @param {number} labelRadius
- * @param {number} fontSize
- * @param {number} numOfLabels
- * @param {number} increment
- * @param {number} labelStart
+ * @param typeOfLabel
  * @param {function} isInSlot
- * @param {String} color
  */
-const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, labelStart, isInSlot, color) => {
+
+const drawLabels = (typeOfLabel, isInSlot) => {
+    let labelAngle = -90, labelRadius, fontSize, numOfLabels, increment, labelStart = 0, color = greyColor
+    switch (typeOfLabel) {
+        case LabelTypes.HOUR:
+        case LabelTypes.HOUR_HIGHLIGHT:
+            labelRadius = 235
+            fontSize = 30
+            numOfLabels = 24
+            increment = 1
+            break
+        default: // aka LabelTypes.MINUTE
+            labelRadius = 155
+            fontSize = 18
+            numOfLabels = 12
+            increment = 5
+    }
+
+    if (typeOfLabel === LabelTypes.HOUR_HIGHLIGHT) color = whiteColor
+
     const xCorrex = -(fontSize / 2); // Because of the FontSize to position it correct over the Strokes
     const yCorrex = (fontSize / 3);
     let labelText = labelStart;
@@ -228,7 +262,7 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, l
 
     for (let i = 0; i < numOfLabels; i++) {
         cx.save();
-        cx.translate(300, 300);
+        cx.translate(centerX, centerY);
         cx.fillStyle = color;
         if (isInSlot(i)) {
             cx.font = '400 ' + fontSize + 'px robotobold';
@@ -237,7 +271,13 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, l
         }
         let x = labelRadius * Math.cos(getRadians(labelAngle + (angleBetweenLabels * i))) + xCorrex;
         let y = labelRadius * Math.sin(getRadians(labelAngle + (angleBetweenLabels * i))) + yCorrex;
-        let text = (labelText.toString().length === 1) ?  ` ${labelText}` : labelText;
+
+        // save position of hour label
+        if (typeOfLabel === LabelTypes.HOUR) {
+            clickableHours[labelText] = {x: x + centerX - xCorrex, y: y + centerY - yCorrex}
+        }
+
+        let text = (labelText.toString().length === 1) ? ` ${labelText}` : labelText;
         cx.fillText(text, x, y);// Text
         cx.restore();
 
@@ -246,17 +286,17 @@ const drawLabels = (labelAngle, labelRadius, fontSize, numOfLabels, increment, l
 }
 
 function drawHighlightLabels(startHour, startMinute, endHour, endMinute, isInSlot) {
+    if (!startHour || !endHour) return;
+
     let startAngle = angleForTime(startHour, startMinute);
     let endAngle = angleForTime(endHour, endMinute);
-
     clipArc(startAngle, endAngle);
 
-    drawLabels(-90, 235, 30, 24, 1, 0, isInSlot, whiteColor); // highlighted hour Labels
+    drawLabels(LabelTypes.HOUR_HIGHLIGHT, isInSlot); // highlighted hour Labels
 
     cx.restore();
 
 }
-
 
 const drawClockFace = () => {
     // Weisse Scheibe
@@ -307,7 +347,6 @@ const drawMiddlePoint = () => {
     cx.restore();
 }
 
-
 /**
  * @param {number} hours
  * @param {number} minutes
@@ -334,16 +373,10 @@ const angleForTime = (hours, minutes, clockFaceMinutes = false) => {
 }
 
 const timeForAngle = (angle, clockFaceMinutes = false) => {
-    let degree = angle * 180 / Math.PI + 180
+    let degree = angle * 180 / Math.PI
+    let timePerDegree = clockFaceMinutes ? 360 / 60 : 360 / (24 * 60);
 
-    let timePerDegree;
-    if (clockFaceMinutes) {
-        timePerDegree = 360 / 60;
-    } else {
-        timePerDegree = 360 / (24 * 60);
-    }
-
-    return Math.round(degree / timePerDegree);
+    return Math.round(degree / timePerDegree) % 60;
 }
 
 const drawLine = (angle, color, clockFaceMinutes = false) => {
@@ -376,8 +409,8 @@ const drawLine = (angle, color, clockFaceMinutes = false) => {
 
 }
 
-
 const drawOuterArc = (startHour, startMinute, endHour, endMinute, color, drawLines = false, fullHoursOnly = false) => {
+    if (!startHour || !endHour) return;
 
     let startAngle;
     let endAngle;
@@ -399,21 +432,14 @@ const drawOuterArc = (startHour, startMinute, endHour, endMinute, color, drawLin
     }
 }
 
-const drawInnerArc = (startMinute, endMinute, color, drawLines = true,) => {
-
+const drawInnerArc = (startMinute, endMinute, color) => {
     let startAngle = angleForTime(0, startMinute, true);
     let endAngle = angleForTime(0, endMinute, true);
 
     drawArc(startAngle, endAngle, color, true)
-
-    if (drawLines) {
-        drawLine(startAngle, greenColor, true);
-        drawLine(endAngle, redColor, true);
-    }
 }
 
 const drawArc = (startAngle, endAngle, color, drawInner = false) => {
-
     cx.save();
     cx.beginPath();
     if (drawInner) {
