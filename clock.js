@@ -1,12 +1,19 @@
 const canvas = document.getElementById("canvas");
 const cx = canvas.getContext("2d");
+const darModeCB = document.getElementById("darkMode");
 
-const lightColor = '#ADCEFF'
-const darkColor = '#4485E8'
-const greenColor = '#90F0B6';
-const redColor = '#F09090';
-const whiteColor = '#FFF';
-const greyColor = '#6D6D6D';
+
+let lightColor = '#ADCEFF';
+let darkColor = '#4485E8';
+let greenColor = '#90F0B6';
+let redColor = '#F09090';
+let whiteColor = '#FFF';
+let greyColor = '#6D6D6D';
+let clockFaceFill = '#ffffff';
+let clockFaceShadow = '#a2a2a2';
+let clockFaceStrokeStyleBold = '#000000';
+let clockFaceStrokeStyleThin = '#6D6D6D';
+let middlePointColor = '#606060';
 
 const centerX = canvas.width / 2;
 const centerY = canvas.height / 2;
@@ -38,6 +45,58 @@ const LabelTypes = {
     MINUTE: "Minute",
     HOUR_HIGHLIGHT: "Highlighted_Hour"
 }
+
+const Observable = value => {
+    const listeners = []; // many
+    return {
+        onChange: callback => listeners.push(callback),
+        getValue: () => value,
+        setValue: val => {
+            if (value === val) return; // protection
+            // ordering
+            value = val;
+            listeners.forEach(notify => notify(val));
+        }
+    }
+};
+
+let darkMode = Observable(false);
+
+
+darModeCB.onchange = _ => darkMode.setValue(!darkMode.getValue());
+
+darkMode.onChange(() => {
+    const bdy = document.querySelector('body');
+    if (darkMode.getValue()) {
+        bdy.dataset.theme = "dark";
+        lightColor = 'rgba(79,140,233,0.76)';
+        darkColor = '#005AAD';
+        greenColor = '#90F0B6';
+        redColor = '#F09090';
+        whiteColor = '#FFF';
+        greyColor = '#DDDDDD';
+        clockFaceFill = '#575757';
+        clockFaceShadow = '#575757';
+        clockFaceStrokeStyleBold = '#fcfcfc';
+        clockFaceStrokeStyleThin = '#EDEDED';
+        middlePointColor = '#E1E1E1';
+    } else {
+        bdy.dataset.theme = "light";
+        lightColor = '#ADCEFF';
+        darkColor = '#4485E8';
+        greenColor = '#90F0B6';
+        redColor = '#F09090';
+        whiteColor = '#FFF';
+        greyColor = '#6D6D6D';
+        clockFaceFill = '#ffffff';
+        clockFaceShadow = '#a2a2a2';
+        clockFaceStrokeStyleBold = '#000000';
+        clockFaceStrokeStyleThin = '#6D6D6D';
+        middlePointColor = '#606060';
+    }
+
+});
+
 
 function getMousePosOnCanvas(coordinates) {
     let rect = canvas.getBoundingClientRect();
@@ -136,18 +195,18 @@ canvas.addEventListener("mouseup", _ => {
     if (selectedTimeWithHandle.startHour === null && mouseOnHour(mousePosition) >= 0) {
         // first click on hourlabel -> set startHour
         selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
-    } else if (selectedTimeWithHandle.endHour === null  && mouseOnHour(mousePosition) >= 0) {
+    } else if (selectedTimeWithHandle.endHour === null && mouseOnHour(mousePosition) >= 0) {
         // second click on hourlabel -> set endHour + show handle
         selectedTimeWithHandle.endHour = mouseOnHour(mousePosition)
         handles.push(new Handle("startMinute", canvas.width / 2, 50, greenColor, 2 * Math.PI, 200))
     } else if (handles.length === 1 && downHandle != null) {
         // first handle set -> show second handle
         handles.push(new Handle("endMinute", canvas.width / 2, 50, redColor, 2 * Math.PI, 200))
-    } else if (mouseOnHour(mousePosition) > 0 && downHandle === null){
+    } else if (mouseOnHour(mousePosition) > 0 && downHandle === null) {
         // click on hourlabel && no handle selected -> reset
-            resetTime()
-            selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
-        }
+        resetTime()
+        selectedTimeWithHandle.startHour = mouseOnHour(mousePosition)
+    }
 
     // set minutes according to handle position
     if (downHandle != null) {
@@ -301,9 +360,9 @@ function drawHighlightLabels(startHour, startMinute, endHour, endMinute, isInSlo
 const drawClockFace = () => {
     // Weisse Scheibe
     cx.save();
-    cx.fillStyle = "#ffffff";
+    cx.fillStyle = clockFaceFill;
     cx.translate(300, 300);
-    cx.shadowColor = "#a2a2a2";
+    cx.shadowColor = clockFaceShadow;
     cx.shadowBlur = 10;
     cx.shadowOffsetY = 0;
     cx.beginPath();
@@ -322,10 +381,10 @@ const drawClockFace = () => {
         cx.lineTo(0, -200);
 
         if (i % 5 === 0) {
-            cx.strokeStyle = "#000000";
+            cx.strokeStyle = clockFaceStrokeStyleBold;
             cx.lineWidth = 3
         } else {
-            cx.strokeStyle = "#6D6D6D";
+            cx.strokeStyle = clockFaceStrokeStyleThin;
             cx.lineWidth = 1;
         }
         cx.stroke();
@@ -336,7 +395,7 @@ const drawClockFace = () => {
 
 const drawMiddlePoint = () => {
     // Punkt in der Mitte
-    cx.fillStyle = '#606060';
+    cx.fillStyle = middlePointColor;
     cx.save();
     cx.translate(300, 300);
     cx.beginPath();

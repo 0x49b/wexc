@@ -6,21 +6,39 @@
     <title>Clock</title>
     <link rel="stylesheet" href="font/stylesheet.css">
     <style>
+        :root {
+            --background: #FCFCFC;
+            --canvas-background: #E5E5E5;
+            --font-color: #181818;
+        }
+
+        [data-theme="dark"] {
+            --background: #181818;
+            --canvas-background: #333333;
+            --font-color: #FCFCFC;
+        }
+
         body {
-            font-family: 'robotolight', sans-serif
+            font-family: 'robotolight', sans-serif;
+            background-color: var(--background);
+            color: var(--font-color);
         }
 
         canvas {
             font-family: 'Roboto', sans-serif;
-            background-color: #e5e5e5;
+            background-color: var(--canvas-background);
             border-radius: 5%
         }
     </style>
 </head>
 
-<body onload="start()">
-    <canvas id="canvas" width="600" height="600"></canvas>
-    <script src="clock.js"></script>
-</body>
+<body onload="start()" data-theme="light">
+<canvas id="canvas" width="600" height="600"></canvas>
 
+<div>
+    <label for="darkMode"><input type="checkbox" id="darkMode"> Dark Mode</label>
+</div>
+
+<script src="clock.js"></script>
+</body>
 </html>
